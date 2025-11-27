@@ -21,14 +21,14 @@ import {
   writeBatch
 } from 'firebase/firestore';
 
-// REPLACE WITH YOUR FIREBASE CONFIG
+// Configuração Real do Firebase (Baseado no seu arquivo firebase.js)
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyDummyKey-REPLACE_ME",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "meurenda-plus.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "meurenda-plus",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
+  apiKey: "AIzaSyABKI2SViwg2aT_hr2KHQoqfPEqqO3HDCw",
+  authDomain: "meurenda-d52d9.firebaseapp.com",
+  projectId: "meurenda-d52d9",
+  storageBucket: "meurenda-d52d9.firebasestorage.app",
+  messagingSenderId: "739380492360",
+  appId: "1:739380492360:web:38e9fdd5eadc5337ca807d"
 };
 
 const app = initializeApp(firebaseConfig);
