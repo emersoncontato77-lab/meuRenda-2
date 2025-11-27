@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
@@ -21,7 +21,6 @@ import {
   writeBatch
 } from 'firebase/firestore';
 
-// Configuração Real do Firebase (Baseado no seu arquivo firebase.js)
 const firebaseConfig = {
   apiKey: "AIzaSyABKI2SViwg2aT_hr2KHQoqfPEqqO3HDCw",
   authDomain: "meurenda-d52d9.firebaseapp.com",
@@ -31,7 +30,8 @@ const firebaseConfig = {
   appId: "1:739380492360:web:38e9fdd5eadc5337ca807d"
 };
 
-const app = initializeApp(firebaseConfig);
+// Singleton pattern para evitar inicialização dupla
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
