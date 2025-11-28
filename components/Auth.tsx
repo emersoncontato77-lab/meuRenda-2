@@ -28,59 +28,67 @@ export const Auth: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
-        <div className="flex justify-center mb-6">
-          <div className="bg-violet-600 p-3 rounded-full">
-            <TrendingUp className="text-white w-8 h-8" />
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#000000] p-4 text-white">
+      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-neon relative overflow-hidden">
+        
+        {/* Decorative Glow */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#39FF14] opacity-5 blur-[80px] rounded-full"></div>
+
+        <div className="flex justify-center mb-6 relative z-10">
+          <div className="bg-black border border-[#39FF14] p-4 rounded-full shadow-[0_0_15px_rgba(57,255,20,0.3)]">
+            <TrendingUp className="text-[#39FF14] w-8 h-8" />
           </div>
         </div>
-        <h1 className="text-3xl font-bold text-center text-white mb-2">meuRenda+</h1>
-        <p className="text-slate-400 text-center mb-8">
-          {isLogin ? 'Bem-vindo de volta, empreendedor!' : 'Comece a controlar seu lucro hoje.'}
+        
+        <h1 className="text-3xl font-bold text-center text-white mb-2 tracking-wide">
+          MeuRenda<span className="text-[#39FF14]">+</span>
+        </h1>
+        <p className="text-gray-400 text-center mb-8 text-sm">
+          {isLogin ? 'Login' : 'Crie sua conta'}
         </p>
 
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-4 relative z-10">
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
+            <label className="block text-xs font-bold text-[#39FF14] mb-1 uppercase tracking-wider">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-violet-500 outline-none transition"
+              className="w-full bg-black border border-zinc-800 text-white rounded-xl p-3 focus:border-[#39FF14] focus:shadow-[0_0_10px_rgba(57,255,20,0.2)] outline-none transition placeholder-zinc-700"
               placeholder="seu@email.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Senha</label>
+            <label className="block text-xs font-bold text-[#39FF14] mb-1 uppercase tracking-wider">Senha</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-violet-500 outline-none transition"
+              className="w-full bg-black border border-zinc-800 text-white rounded-xl p-3 focus:border-[#39FF14] focus:shadow-[0_0_10px_rgba(57,255,20,0.2)] outline-none transition placeholder-zinc-700"
               placeholder="••••••••"
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          {error && <p className="text-red-500 text-sm text-center font-medium">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-lg transition flex justify-center items-center"
+            className="w-full bg-[#39FF14] hover:bg-[#32cc12] text-black font-bold py-4 rounded-xl transition flex justify-center items-center shadow-[0_0_15px_rgba(57,255,20,0.4)]"
           >
-            {loading ? <Loader2 className="animate-spin" /> : (isLogin ? 'Entrar' : 'Criar Conta')}
+            {loading ? <Loader2 className="animate-spin" /> : (isLogin ? 'ENTRAR' : 'CRIAR CONTA')}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center relative z-10">
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-violet-400 hover:text-violet-300 text-sm"
+            className="text-gray-400 hover:text-white text-sm transition"
           >
-            {isLogin ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entrar'}
+            {isLogin ? 'Não tem conta? ' : 'Já tem conta? '}
+            <span className="text-[#39FF14] underline underline-offset-4">{isLogin ? 'Cadastre-se' : 'Entrar'}</span>
           </button>
         </div>
       </div>

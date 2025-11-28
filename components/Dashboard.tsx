@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import { Transaction, TransactionType } from '../types';
-import { ArrowUpRight, TrendingDown, Target, Wallet, Settings } from 'lucide-react';
+import { ArrowUpRight, TrendingDown, Target, Wallet, Settings, TrendingUp } from 'lucide-react';
 import { startOfMonth, isAfter } from 'date-fns';
 
 interface DashboardProps {
   transactions: Transaction[];
-  onNavigate: (tab: 'GOALS' | 'SETTINGS') => void;
+  onNavigate: (tab: 'GOALS' | 'SETTINGS' | 'REPORTS') => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ transactions, onNavigate }) => {
@@ -15,27 +15,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, onNavigate }
     const monthStart = startOfMonth(now);
 
     let monthlyRev = 0;
-    let monthlyProfit = 0;
     let monthlyExpenses = 0;
     let monthlyInvestments = 0;
 
     transactions.forEach(t => {
       const tDate = new Date(t.date);
 
-      // We focus on "Last Month" (Current Month in progress) as per standard dashboard UX
       if (isAfter(tDate, monthStart) || tDate.getTime() >= monthStart.getTime()) {
         if (t.type === TransactionType.SALE) {
-          const profit = t.amount - (t.cost || 0);
           monthlyRev += t.amount;
-          monthlyProfit += profit;
         } else if (t.type === TransactionType.EXPENSE) {
-          monthlyProfit -= t.amount;
           monthlyExpenses += t.amount;
         } else if (t.type === TransactionType.INVESTMENT) {
           monthlyInvestments += t.amount;
         }
       }
     });
+
+    const monthlyProfit = monthlyRev - monthlyExpenses;
 
     return { monthlyRev, monthlyProfit, monthlyExpenses, monthlyInvestments };
   }, [transactions]);
@@ -44,11 +41,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, onNavigate }
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
-    <div className="space-y-6 pb-32">
+    <div className="space-y-8 pb-32 bg-[#000000] min-h-screen">
       {/* Header */}
-      <header className="flex justify-center items-center relative py-2">
-        <h1 className="text-xl font-bold tracking-wider text-white">
-          MeuRenda<span className="text-neon">+</span>
+      <header className="flex justify-center items-center relative py-4">
+        <h1 className="text-xl font-bold tracking-widest text-white">
+          MEURENDA<span className="text-[#39FF14]">+</span>
         </h1>
         <button 
           onClick={() => onNavigate('SETTINGS')}
@@ -59,16 +56,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, onNavigate }
       </header>
 
       {/* Hero Card - Net Profit */}
-      <div className="w-full bg-zinc-900 rounded-3xl p-6 border border-neon shadow-neon relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-neon opacity-10 blur-3xl rounded-full"></div>
+      <div className="w-full bg-zinc-900 rounded-[32px] p-8 border border-[#39FF14]/50 shadow-[0_0_25px_rgba(57,255,20,0.15)] relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#39FF14] opacity-10 blur-[80px] rounded-full group-hover:opacity-20 transition duration-700"></div>
         <div className="relative z-10 text-center">
-          <p className="text-gray-400 text-xs uppercase tracking-widest mb-2 font-medium">Lucro Líquido (Mês)</p>
-          <div className={`text-4xl font-bold ${stats.monthlyProfit >= 0 ? 'text-white' : 'text-red-500'} drop-shadow-md`}>
+          <p className="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-3 font-bold">Lucro Líquido (Mês)</p>
+          <div className={`text-5xl font-black ${stats.monthlyProfit >= 0 ? 'text-white' : 'text-red-500'} tracking-tight`}>
             {formatCurrency(stats.monthlyProfit)}
           </div>
-          <div className="mt-2 text-[10px] text-neon flex justify-center items-center gap-1">
-             <div className="w-2 h-2 bg-neon rounded-full animate-pulse"></div>
-             Atualizado em tempo real
+          <div className="mt-4 text-[10px] text-[#39FF14] flex justify-center items-center gap-2 font-mono">
+             <span className="relative flex h-2 w-2">
+               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39FF14] opacity-75"></span>
+               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#39FF14]"></span>
+             </span>
+             TEMPO REAL
           </div>
         </div>
       </div>
@@ -77,40 +77,40 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, onNavigate }
       <div className="grid grid-cols-2 gap-4">
         
         {/* Card 1: Faturamento */}
-        <div className="bg-zinc-900 p-4 rounded-2xl border border-gray-800 hover:border-neon/50 transition duration-300">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-green-900/30 p-1.5 rounded-lg text-green-400">
-              <ArrowUpRight size={16} />
+        <div className="bg-zinc-900 p-5 rounded-3xl border border-zinc-800 hover:border-[#39FF14]/30 transition duration-300">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-black border border-zinc-700 p-2 rounded-xl text-blue-400">
+              <TrendingUp size={16} />
             </div>
-            <span className="text-[10px] uppercase text-gray-400 font-bold">Faturamento</span>
+            <span className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">Faturamento</span>
           </div>
-          <div className="text-lg font-bold text-white">
+          <div className="text-xl font-bold text-white">
             {formatCurrency(stats.monthlyRev)}
           </div>
         </div>
 
         {/* Card 2: Gastos */}
-        <div className="bg-zinc-900 p-4 rounded-2xl border border-gray-800 hover:border-neon/50 transition duration-300">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-red-900/30 p-1.5 rounded-lg text-red-400">
+        <div className="bg-zinc-900 p-5 rounded-3xl border border-zinc-800 hover:border-[#39FF14]/30 transition duration-300">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-black border border-zinc-700 p-2 rounded-xl text-red-500">
               <TrendingDown size={16} />
             </div>
-            <span className="text-[10px] uppercase text-gray-400 font-bold">Gastos</span>
+            <span className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">Gastos</span>
           </div>
-          <div className="text-lg font-bold text-white">
+          <div className="text-xl font-bold text-white">
             {formatCurrency(stats.monthlyExpenses)}
           </div>
         </div>
 
         {/* Card 3: Investimentos */}
-        <div className="bg-zinc-900 p-4 rounded-2xl border border-gray-800 hover:border-neon/50 transition duration-300">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-blue-900/30 p-1.5 rounded-lg text-blue-400">
+        <div className="bg-zinc-900 p-5 rounded-3xl border border-zinc-800 hover:border-[#39FF14]/30 transition duration-300">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-black border border-zinc-700 p-2 rounded-xl text-yellow-400">
               <Wallet size={16} />
             </div>
-            <span className="text-[10px] uppercase text-gray-400 font-bold">Investido</span>
+            <span className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">Investido</span>
           </div>
-          <div className="text-lg font-bold text-white">
+          <div className="text-xl font-bold text-white">
             {formatCurrency(stats.monthlyInvestments)}
           </div>
         </div>
@@ -118,32 +118,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, onNavigate }
         {/* Card 4: Metas (Link) */}
         <button 
           onClick={() => onNavigate('GOALS')}
-          className="bg-black p-4 rounded-2xl border border-neon shadow-neon flex flex-col justify-center items-center gap-2 group hover:bg-zinc-900 transition"
+          className="bg-black p-5 rounded-3xl border border-[#39FF14] shadow-[0_0_15px_rgba(57,255,20,0.2)] flex flex-col justify-center items-center gap-3 group hover:bg-zinc-900 transition"
         >
-          <Target className="text-neon group-hover:scale-110 transition-transform" size={24} />
-          <span className="text-sm font-bold text-white">Ver Metas</span>
+          <Target className="text-[#39FF14] group-hover:scale-110 transition-transform duration-300" size={28} />
+          <span className="text-xs font-bold text-white uppercase tracking-wider">Ver Metas</span>
         </button>
 
       </div>
-
-      {/* Recent Activity Hint */}
-      <div className="mt-8">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Atividade Recente</h3>
-        <div className="space-y-3">
-          {transactions.slice(0, 3).map((t, i) => (
-            <div key={i} className="flex justify-between items-center bg-zinc-900/50 p-3 rounded-xl border-l-2 border-gray-800 hover:border-neon transition">
-              <span className="text-sm text-gray-300 truncate max-w-[150px]">{t.description}</span>
-              <span className={`text-sm font-bold ${t.type === TransactionType.SALE ? 'text-neon' : t.type === TransactionType.EXPENSE ? 'text-red-400' : 'text-blue-400'}`}>
-                {t.type === TransactionType.SALE ? '+' : '-'} {formatCurrency(t.amount)}
-              </span>
-            </div>
-          ))}
-          {transactions.length === 0 && (
-            <p className="text-gray-600 text-xs italic">Nenhuma movimentação registrada este mês.</p>
-          )}
-        </div>
-      </div>
-
     </div>
   );
 };

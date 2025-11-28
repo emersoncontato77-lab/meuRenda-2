@@ -55,7 +55,7 @@ const App: React.FC = () => {
   }, [user]);
 
   if (loading) {
-    return <div className="min-h-screen bg-black flex items-center justify-center text-white"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-neon"></div></div>;
+    return <div className="min-h-screen bg-black flex items-center justify-center text-white"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#39FF14]"></div></div>;
   }
 
   if (!user) {
@@ -73,26 +73,26 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-slate-200 font-sans selection:bg-neon/30">
+    <div className="min-h-screen bg-[#000000] text-gray-100 font-sans selection:bg-[#39FF14]/30">
       
       {/* Main Content Area */}
-      <main className="max-w-md mx-auto min-h-screen p-4 pt-6 pb-24 relative">
+      <main className="max-w-md mx-auto min-h-screen p-6 relative">
         {renderContent()}
       </main>
 
       {/* Sticky Bottom Navigation - Fixed actions bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-gray-800 pb-safe z-50">
-        <div className="max-w-md mx-auto w-full px-2 py-3">
+      <nav className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-zinc-900 pb-safe z-50">
+        <div className="max-w-md mx-auto w-full px-4 py-4">
           <ul className="grid grid-cols-5 gap-1 items-end">
             
-            {/* 1. Home (Implicitly needed for UX) */}
+            {/* 1. Home */}
             <li>
               <button 
                 onClick={() => setActiveTab('HOME')}
-                className={`w-full flex flex-col items-center gap-1 transition-all ${activeTab === 'HOME' ? 'text-neon' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`w-full flex flex-col items-center gap-1.5 transition-all ${activeTab === 'HOME' ? 'text-[#39FF14]' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
-                <Home size={22} strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
-                <span className="text-[9px] font-medium uppercase tracking-wide">Home</span>
+                <Home size={24} strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
+                <span className="text-[8px] font-bold uppercase tracking-widest">Home</span>
               </button>
             </li>
 
@@ -100,12 +100,12 @@ const App: React.FC = () => {
             <li>
               <button 
                 onClick={() => setModalType(TransactionType.SALE)}
-                className="w-full flex flex-col items-center gap-1 text-gray-500 hover:text-green-400 transition-colors group"
+                className="w-full flex flex-col items-center gap-1.5 text-zinc-600 hover:text-white transition-colors group"
               >
-                <div className="bg-gray-800 group-hover:bg-gray-700 p-2 rounded-xl border border-gray-700 group-hover:border-green-500 transition-all">
-                  <Plus size={20} className="text-green-500" />
+                <div className="bg-zinc-900 group-hover:bg-[#39FF14] group-hover:text-black p-3 rounded-2xl border border-zinc-800 group-hover:border-[#39FF14] transition-all shadow-lg">
+                  <Plus size={20} />
                 </div>
-                <span className="text-[9px] font-medium uppercase tracking-wide">Vendas</span>
+                <span className="text-[8px] font-bold uppercase tracking-widest group-hover:text-[#39FF14]">Vendas</span>
               </button>
             </li>
 
@@ -113,12 +113,12 @@ const App: React.FC = () => {
             <li>
               <button 
                 onClick={() => setModalType(TransactionType.EXPENSE)}
-                className="w-full flex flex-col items-center gap-1 text-gray-500 hover:text-red-400 transition-colors group"
+                className="w-full flex flex-col items-center gap-1.5 text-zinc-600 hover:text-white transition-colors group"
               >
-                <div className="bg-gray-800 group-hover:bg-gray-700 p-2 rounded-xl border border-gray-700 group-hover:border-red-500 transition-all">
-                  <Minus size={20} className="text-red-500" />
+                <div className="bg-zinc-900 group-hover:bg-red-500 group-hover:text-white p-3 rounded-2xl border border-zinc-800 group-hover:border-red-500 transition-all shadow-lg">
+                  <Minus size={20} />
                 </div>
-                <span className="text-[9px] font-medium uppercase tracking-wide">Gastos</span>
+                <span className="text-[8px] font-bold uppercase tracking-widest group-hover:text-red-500">Gastos</span>
               </button>
             </li>
 
@@ -126,10 +126,10 @@ const App: React.FC = () => {
             <li>
               <button 
                 onClick={() => setActiveTab('REPORTS')}
-                className={`w-full flex flex-col items-center gap-1 transition-all ${activeTab === 'REPORTS' ? 'text-neon' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`w-full flex flex-col items-center gap-1.5 transition-all ${activeTab === 'REPORTS' ? 'text-[#39FF14]' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
-                <BarChart3 size={22} strokeWidth={activeTab === 'REPORTS' ? 2.5 : 2} />
-                <span className="text-[9px] font-medium uppercase tracking-wide">Relat.</span>
+                <BarChart3 size={24} strokeWidth={activeTab === 'REPORTS' ? 2.5 : 2} />
+                <span className="text-[8px] font-bold uppercase tracking-widest">Relat.</span>
               </button>
             </li>
 
@@ -137,10 +137,10 @@ const App: React.FC = () => {
             <li>
               <button 
                 onClick={() => setActiveTab('GOALS')}
-                className={`w-full flex flex-col items-center gap-1 transition-all ${activeTab === 'GOALS' ? 'text-neon' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`w-full flex flex-col items-center gap-1.5 transition-all ${activeTab === 'GOALS' ? 'text-[#39FF14]' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
-                <Target size={22} strokeWidth={activeTab === 'GOALS' ? 2.5 : 2} />
-                <span className="text-[9px] font-medium uppercase tracking-wide">Metas</span>
+                <Target size={24} strokeWidth={activeTab === 'GOALS' ? 2.5 : 2} />
+                <span className="text-[8px] font-bold uppercase tracking-widest">Metas</span>
               </button>
             </li>
 

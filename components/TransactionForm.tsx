@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TransactionType } from '../types';
-import { X, Calendar } from 'lucide-react';
+import { X, Calendar, DollarSign, Tag, AlertCircle } from 'lucide-react';
 import { db, TRANSACTIONS_COLLECTION, auth } from '../services/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
@@ -11,10 +11,12 @@ interface TransactionFormProps {
 
 export const TransactionForm: React.FC<TransactionFormProps> = ({ type, onClose }) => {
   const [amount, setAmount] = useState('');
-  const [cost, setCost] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
+
+  // For Expenses only
+  const [expenseType, setExpenseType] = useState('Variável');
 
   if (!type) return null;
 
@@ -25,14 +27,20 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, onClose 
     setLoading(true);
     try {
       const numAmount = parseFloat(amount);
-      const numCost = cost ? parseFloat(cost) : 0;
       
+      // Determine description based on type if empty
+      let finalDescription = description;
+      if (!finalDescription) {
+        if (type === TransactionType.SALE) finalDescription = "Faturamento Diário";
+      }
+
       await addDoc(collection(db, TRANSACTIONS_COLLECTION), {
         userId: auth.currentUser.uid,
         type,
-        description,
+        description: finalDescription,
         amount: numAmount,
-        cost: type === TransactionType.SALE ? numCost : 0,
+        cost: 0, // No longer used for Sales input
+        category: type === TransactionType.EXPENSE ? expenseType : undefined,
         date: new Date(date).getTime(),
         createdAt: Date.now()
       });
@@ -47,124 +55,113 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, onClose 
 
   const getTitle = () => {
     switch (type) {
-      case TransactionType.SALE: return 'Nova Venda';
-      case TransactionType.EXPENSE: return 'Novo Gasto';
-      case TransactionType.INVESTMENT: return 'Novo Investimento';
+      case TransactionType.SALE: return 'REGISTRAR FATURAMENTO';
+      case TransactionType.EXPENSE: return 'REGISTRAR GASTO';
+      case TransactionType.INVESTMENT: return 'NOVO INVESTIMENTO';
       default: return '';
     }
   };
 
-  const getProfitPreview = () => {
-    if (type !== TransactionType.SALE) return null;
-    const val = parseFloat(amount) || 0;
-    const c = parseFloat(cost) || 0;
-    const profit = val - c;
-    const margin = val > 0 ? ((profit / val) * 100).toFixed(1) : '0.0';
-    return (
-      <div className="mt-4 p-3 bg-slate-800 rounded-lg border border-slate-700">
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-slate-400">Lucro Estimado:</span>
-          <span className={profit >= 0 ? 'text-green-400' : 'text-red-400'}>
-            R$ {profit.toFixed(2)}
-          </span>
-        </div>
-        <div className="flex justify-between text-xs">
-          <span className="text-slate-500">Margem:</span>
-          <span className="text-slate-300">{margin}%</span>
-        </div>
-      </div>
-    );
+  const getButtonColor = () => {
+    if (type === TransactionType.EXPENSE) return 'bg-red-600 hover:bg-red-700 shadow-red-900/50';
+    if (type === TransactionType.INVESTMENT) return 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/50';
+    return 'bg-[#39FF14] hover:bg-[#32cc12] text-black shadow-[0_0_20px_rgba(57,255,20,0.4)]';
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 w-full max-w-md rounded-3xl p-6 border border-slate-800 shadow-2xl relative animate-in slide-in-from-bottom-10 duration-300">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-zinc-900 w-full max-w-md rounded-3xl p-6 border border-[#39FF14]/30 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative animate-in slide-in-from-bottom-10 duration-300">
+        
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 p-2 bg-black rounded-full text-gray-400 hover:text-white border border-zinc-800"
         >
           <X size={20} />
         </button>
 
-        <h2 className="text-xl font-bold text-white mb-6">{getTitle()}</h2>
+        <div className="flex items-center gap-3 mb-6">
+           {type === TransactionType.SALE && <div className="p-2 bg-[#39FF14]/10 rounded-full"><DollarSign className="text-[#39FF14]" /></div>}
+           {type === TransactionType.EXPENSE && <div className="p-2 bg-red-500/10 rounded-full"><AlertCircle className="text-red-500" /></div>}
+           {type === TransactionType.INVESTMENT && <div className="p-2 bg-blue-500/10 rounded-full"><DollarSign className="text-blue-500" /></div>}
+           <h2 className="text-xl font-bold text-white tracking-wide">{getTitle()}</h2>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Valor (R$)</label>
-            <input
-              type="number"
-              step="0.01"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white text-lg font-semibold rounded-xl p-4 focus:ring-2 focus:ring-violet-500 outline-none"
-              placeholder="0,00"
-            />
+            <label className="block text-[10px] font-bold text-[#39FF14] mb-2 uppercase tracking-widest">
+              {type === TransactionType.SALE ? 'Valor Faturado (Total do Dia)' : 'Valor (R$)'}
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">R$</span>
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full bg-black border border-zinc-700 text-white text-2xl font-bold rounded-xl p-4 pl-12 focus:border-[#39FF14] focus:shadow-[0_0_10px_rgba(57,255,20,0.1)] outline-none transition placeholder-zinc-800"
+                placeholder="0.00"
+                autoFocus
+              />
+            </div>
           </div>
 
-          {type === TransactionType.SALE && (
-             <div>
-             <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Custo do Produto (R$)</label>
-             <input
-               type="number"
-               step="0.01"
-               required
-               value={cost}
-               onChange={(e) => setCost(e.target.value)}
-               className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 focus:ring-2 focus:ring-violet-500 outline-none"
-               placeholder="Quanto custou pra você?"
-             />
-           </div>
-          )}
-
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Descrição</label>
+            <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest flex items-center gap-1">
+              <Tag size={12}/> Descrição
+            </label>
             <input
               type="text"
-              required
+              required={type !== TransactionType.SALE}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 focus:ring-2 focus:ring-violet-500 outline-none"
-              placeholder={type === TransactionType.EXPENSE ? "Ex: Aluguel, Luz" : "Ex: Camiseta, Serviço X"}
+              className="w-full bg-black border border-zinc-700 text-white rounded-xl p-3 focus:border-[#39FF14] outline-none transition placeholder-zinc-800"
+              placeholder={
+                type === TransactionType.SALE ? "Opcional (ex: Vendas da manhã)" : 
+                type === TransactionType.EXPENSE ? "Ex: Luz, Aluguel, Fornecedor" : 
+                "Ex: CDB, Equipamento novo"
+              }
             />
           </div>
 
           {type === TransactionType.EXPENSE && (
              <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Tipo</label>
-              <select className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 outline-none">
-                <option>Fixo</option>
-                <option>Variável</option>
-                <option>Imprevisto</option>
-              </select>
+              <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest">Categoria</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['Fixo', 'Variável', 'Imprevisto'].map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setExpenseType(cat)}
+                    className={`py-2 rounded-lg text-xs font-bold border transition ${expenseType === cat ? 'bg-zinc-800 text-white border-white' : 'bg-black text-gray-500 border-zinc-800'}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1 uppercase flex items-center gap-1">
-              <Calendar size={12}/> Data
+            <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest flex items-center gap-1">
+              <Calendar size={12}/> Data de Referência
             </label>
             <input
               type="date"
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 focus:ring-2 focus:ring-violet-500 outline-none"
+              className="w-full bg-black border border-zinc-700 text-white rounded-xl p-3 focus:border-[#39FF14] outline-none transition"
             />
           </div>
-
-          {getProfitPreview()}
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-4 rounded-xl font-bold text-white transition mt-4
-              ${type === TransactionType.SALE ? 'bg-green-600 hover:bg-green-700' : 
-                type === TransactionType.EXPENSE ? 'bg-red-600 hover:bg-red-700' : 
-                'bg-blue-600 hover:bg-blue-700'}`}
+            className={`w-full py-4 rounded-xl font-bold text-white transition mt-6 shadow-lg ${getButtonColor()}`}
           >
-            {loading ? 'Salvando...' : 'Confirmar'}
+            {loading ? 'SALVANDO...' : 'CONFIRMAR'}
           </button>
 
         </form>
