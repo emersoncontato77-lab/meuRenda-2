@@ -1,173 +1,149 @@
 import React, { useMemo } from 'react';
 import { Transaction, TransactionType } from '../types';
-import { Plus, DollarSign, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
-import { startOfDay, startOfWeek, startOfMonth, isAfter } from 'date-fns';
+import { ArrowUpRight, TrendingDown, Target, Wallet, Settings } from 'lucide-react';
+import { startOfMonth, isAfter } from 'date-fns';
 
 interface DashboardProps {
   transactions: Transaction[];
-  onAddTransaction: (type: TransactionType) => void;
+  onNavigate: (tab: 'GOALS' | 'SETTINGS') => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ transactions, onAddTransaction }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ transactions, onNavigate }) => {
   
   const stats = useMemo(() => {
     const now = new Date();
-    const dayStart = startOfDay(now);
-    const weekStart = startOfWeek(now);
     const monthStart = startOfMonth(now);
 
-    let dailyRev = 0, weeklyRev = 0, monthlyRev = 0;
-    let dailyProfit = 0, monthlyProfit = 0;
-    
-    let totalRevenue = 0;
-    let totalProfit = 0;
+    let monthlyRev = 0;
+    let monthlyProfit = 0;
+    let monthlyExpenses = 0;
+    let monthlyInvestments = 0;
 
     transactions.forEach(t => {
       const tDate = new Date(t.date);
 
-      if (t.type === TransactionType.SALE) {
-        const profit = t.amount - (t.cost || 0);
-        totalRevenue += t.amount;
-        totalProfit += profit;
-
-        if (isAfter(tDate, dayStart) || tDate.getTime() === dayStart.getTime()) {
-          dailyRev += t.amount;
-          dailyProfit += profit;
-        }
-        if (isAfter(tDate, weekStart)) {
-          weeklyRev += t.amount;
-        }
-        if (isAfter(tDate, monthStart)) {
+      // We focus on "Last Month" (Current Month in progress) as per standard dashboard UX
+      if (isAfter(tDate, monthStart) || tDate.getTime() >= monthStart.getTime()) {
+        if (t.type === TransactionType.SALE) {
+          const profit = t.amount - (t.cost || 0);
           monthlyRev += t.amount;
           monthlyProfit += profit;
-        }
-      } else if (t.type === TransactionType.EXPENSE) {
-        // Expenses reduce profit
-        totalProfit -= t.amount;
-         if (isAfter(tDate, dayStart)) {
-          dailyProfit -= t.amount;
-        }
-        if (isAfter(tDate, monthStart)) {
+        } else if (t.type === TransactionType.EXPENSE) {
           monthlyProfit -= t.amount;
+          monthlyExpenses += t.amount;
+        } else if (t.type === TransactionType.INVESTMENT) {
+          monthlyInvestments += t.amount;
         }
       }
     });
 
-    const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
-
-    return { dailyRev, weeklyRev, monthlyRev, dailyProfit, monthlyProfit, margin };
+    return { monthlyRev, monthlyProfit, monthlyExpenses, monthlyInvestments };
   }, [transactions]);
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
-    <div className="space-y-6 pb-24">
-      <header className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Dashboard</h2>
-          <p className="text-slate-400 text-sm">Visão geral do seu negócio</p>
-        </div>
-        <div className="bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-          <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Margem Global</span>
-          <div className={`text-sm font-bold ${stats.margin >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {stats.margin.toFixed(1)}%
-          </div>
-        </div>
+    <div className="space-y-6 pb-32">
+      {/* Header */}
+      <header className="flex justify-center items-center relative py-2">
+        <h1 className="text-xl font-bold tracking-wider text-white">
+          MeuRenda<span className="text-neon">+</span>
+        </h1>
+        <button 
+          onClick={() => onNavigate('SETTINGS')}
+          className="absolute right-0 text-gray-500 hover:text-white transition"
+        >
+          <Settings size={20} />
+        </button>
       </header>
 
-      {/* Main Stats Grid */}
+      {/* Hero Card - Net Profit */}
+      <div className="w-full bg-zinc-900 rounded-3xl p-6 border border-neon shadow-neon relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-20 h-20 bg-neon opacity-10 blur-3xl rounded-full"></div>
+        <div className="relative z-10 text-center">
+          <p className="text-gray-400 text-xs uppercase tracking-widest mb-2 font-medium">Lucro Líquido (Mês)</p>
+          <div className={`text-4xl font-bold ${stats.monthlyProfit >= 0 ? 'text-white' : 'text-red-500'} drop-shadow-md`}>
+            {formatCurrency(stats.monthlyProfit)}
+          </div>
+          <div className="mt-2 text-[10px] text-neon flex justify-center items-center gap-1">
+             <div className="w-2 h-2 bg-neon rounded-full animate-pulse"></div>
+             Atualizado em tempo real
+          </div>
+        </div>
+      </div>
+
+      {/* Grid 2x2 */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
-          <div className="flex items-center gap-2 mb-2 text-slate-400">
-            <DollarSign size={16} />
-            <span className="text-xs uppercase font-semibold">Hoje</span>
-          </div>
-          <div className="text-xl font-bold text-white">{formatCurrency(stats.dailyRev)}</div>
-          <div className={`text-xs mt-1 ${stats.dailyProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            Lucro: {formatCurrency(stats.dailyProfit)}
-          </div>
-        </div>
-
-        <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
-          <div className="flex items-center gap-2 mb-2 text-slate-400">
-            <TrendingUp size={16} />
-            <span className="text-xs uppercase font-semibold">Semana</span>
-          </div>
-          <div className="text-xl font-bold text-white">{formatCurrency(stats.weeklyRev)}</div>
-        </div>
-      </div>
-
-      {/* Monthly Large Card */}
-      <div className="bg-gradient-to-br from-violet-900 to-slate-900 p-6 rounded-3xl border border-violet-800/50 relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-violet-600 rounded-full blur-3xl opacity-20"></div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2 text-violet-200">
-            <Wallet size={18} />
-            <span className="text-sm uppercase font-semibold">Faturamento Mês</span>
-          </div>
-          <div className="text-4xl font-bold text-white mb-2">{formatCurrency(stats.monthlyRev)}</div>
-          <div className="flex items-center gap-2 bg-black/20 w-fit px-3 py-1 rounded-lg backdrop-blur-sm">
-             <span className="text-sm text-violet-200">Lucro Líquido:</span>
-             <span className={`text-sm font-bold ${stats.monthlyProfit >= 0 ? 'text-green-400' : 'text-red-300'}`}>
-               {formatCurrency(stats.monthlyProfit)}
-             </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider ml-1">Ações Rápidas</h3>
         
-        <button 
-          onClick={() => onAddTransaction(TransactionType.SALE)}
-          className="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-600 p-4 rounded-xl flex items-center justify-between border border-slate-700 transition group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-green-500/10 p-2 rounded-lg text-green-500 group-hover:bg-green-500/20 transition">
-              <Plus size={20} />
+        {/* Card 1: Faturamento */}
+        <div className="bg-zinc-900 p-4 rounded-2xl border border-gray-800 hover:border-neon/50 transition duration-300">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-green-900/30 p-1.5 rounded-lg text-green-400">
+              <ArrowUpRight size={16} />
             </div>
-            <div className="text-left">
-              <div className="text-white font-semibold">Nova Venda</div>
-              <div className="text-slate-400 text-xs">Registrar entrada</div>
-            </div>
+            <span className="text-[10px] uppercase text-gray-400 font-bold">Faturamento</span>
           </div>
-          <TrendingUp className="text-slate-600" size={18} />
+          <div className="text-lg font-bold text-white">
+            {formatCurrency(stats.monthlyRev)}
+          </div>
+        </div>
+
+        {/* Card 2: Gastos */}
+        <div className="bg-zinc-900 p-4 rounded-2xl border border-gray-800 hover:border-neon/50 transition duration-300">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-red-900/30 p-1.5 rounded-lg text-red-400">
+              <TrendingDown size={16} />
+            </div>
+            <span className="text-[10px] uppercase text-gray-400 font-bold">Gastos</span>
+          </div>
+          <div className="text-lg font-bold text-white">
+            {formatCurrency(stats.monthlyExpenses)}
+          </div>
+        </div>
+
+        {/* Card 3: Investimentos */}
+        <div className="bg-zinc-900 p-4 rounded-2xl border border-gray-800 hover:border-neon/50 transition duration-300">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-blue-900/30 p-1.5 rounded-lg text-blue-400">
+              <Wallet size={16} />
+            </div>
+            <span className="text-[10px] uppercase text-gray-400 font-bold">Investido</span>
+          </div>
+          <div className="text-lg font-bold text-white">
+            {formatCurrency(stats.monthlyInvestments)}
+          </div>
+        </div>
+
+        {/* Card 4: Metas (Link) */}
+        <button 
+          onClick={() => onNavigate('GOALS')}
+          className="bg-black p-4 rounded-2xl border border-neon shadow-neon flex flex-col justify-center items-center gap-2 group hover:bg-zinc-900 transition"
+        >
+          <Target className="text-neon group-hover:scale-110 transition-transform" size={24} />
+          <span className="text-sm font-bold text-white">Ver Metas</span>
         </button>
 
-        <button 
-          onClick={() => onAddTransaction(TransactionType.EXPENSE)}
-          className="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-600 p-4 rounded-xl flex items-center justify-between border border-slate-700 transition group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-red-500/10 p-2 rounded-lg text-red-500 group-hover:bg-red-500/20 transition">
-              <TrendingDown size={20} />
-            </div>
-            <div className="text-left">
-              <div className="text-white font-semibold">Novo Gasto</div>
-              <div className="text-slate-400 text-xs">Despesa operacional</div>
-            </div>
-          </div>
-          <TrendingDown className="text-slate-600" size={18} />
-        </button>
-
-        <button 
-          onClick={() => onAddTransaction(TransactionType.INVESTMENT)}
-          className="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-600 p-4 rounded-xl flex items-center justify-between border border-slate-700 transition group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-500/10 p-2 rounded-lg text-blue-500 group-hover:bg-blue-500/20 transition">
-              <Wallet size={20} />
-            </div>
-            <div className="text-left">
-              <div className="text-white font-semibold">Investimento</div>
-              <div className="text-slate-400 text-xs">Aporte no negócio</div>
-            </div>
-          </div>
-          <Wallet className="text-slate-600" size={18} />
-        </button>
       </div>
+
+      {/* Recent Activity Hint */}
+      <div className="mt-8">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Atividade Recente</h3>
+        <div className="space-y-3">
+          {transactions.slice(0, 3).map((t, i) => (
+            <div key={i} className="flex justify-between items-center bg-zinc-900/50 p-3 rounded-xl border-l-2 border-gray-800 hover:border-neon transition">
+              <span className="text-sm text-gray-300 truncate max-w-[150px]">{t.description}</span>
+              <span className={`text-sm font-bold ${t.type === TransactionType.SALE ? 'text-neon' : t.type === TransactionType.EXPENSE ? 'text-red-400' : 'text-blue-400'}`}>
+                {t.type === TransactionType.SALE ? '+' : '-'} {formatCurrency(t.amount)}
+              </span>
+            </div>
+          ))}
+          {transactions.length === 0 && (
+            <p className="text-gray-600 text-xs italic">Nenhuma movimentação registrada este mês.</p>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 };

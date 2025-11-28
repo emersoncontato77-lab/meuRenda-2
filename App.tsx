@@ -9,7 +9,7 @@ import { Reports } from './components/Reports';
 import { Settings } from './components/Settings';
 import { TransactionForm } from './components/TransactionForm';
 import { Tab, Transaction, TransactionType } from './types';
-import { Home, Target, BarChart3, Settings as SettingsIcon } from 'lucide-react';
+import { Home, Target, BarChart3, Plus, Minus, Settings as SettingsIcon } from 'lucide-react';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -36,7 +36,7 @@ const App: React.FC = () => {
     const q = query(
       collection(db, TRANSACTIONS_COLLECTION),
       where("userId", "==", user.uid),
-      orderBy("date", "desc") // requires index in firestore sometimes, if fails try sorting in JS
+      orderBy("date", "desc")
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
@@ -44,20 +44,18 @@ const App: React.FC = () => {
         id: doc.id,
         ...doc.data()
       })) as Transaction[];
-      // Client side sort fallback if composite index not created yet
+      // Client side fallback sort
       data.sort((a, b) => b.date - a.date);
       setTransactions(data);
     }, (error) => {
       console.error("Firestore error:", error);
-      // Fallback for index error: simple fetch
-      // In production you create the index via the link provided in console error
     });
 
     return () => unsub();
   }, [user]);
 
   if (loading) {
-    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Carregando...</div>;
+    return <div className="min-h-screen bg-black flex items-center justify-center text-white"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-neon"></div></div>;
   }
 
   if (!user) {
@@ -66,62 +64,88 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'HOME': return <Dashboard transactions={transactions} onAddTransaction={setModalType} />;
+      case 'HOME': return <Dashboard transactions={transactions} onNavigate={(tab) => setActiveTab(tab)} />;
       case 'GOALS': return <Goals transactions={transactions} />;
       case 'REPORTS': return <Reports transactions={transactions} />;
       case 'SETTINGS': return <Settings />;
-      default: return <Dashboard transactions={transactions} onAddTransaction={setModalType} />;
+      default: return <Dashboard transactions={transactions} onNavigate={(tab) => setActiveTab(tab)} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-violet-500/30">
+    <div className="min-h-screen bg-black text-slate-200 font-sans selection:bg-neon/30">
       
       {/* Main Content Area */}
-      <main className="max-w-md mx-auto min-h-screen p-4 pt-8 relative">
+      <main className="max-w-md mx-auto min-h-screen p-4 pt-6 pb-24 relative">
         {renderContent()}
       </main>
 
-      {/* Sticky Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-lg border-t border-slate-800 pb-safe pt-2 px-6 pb-4 z-40 max-w-md mx-auto w-full">
-        <ul className="flex justify-between items-center">
-          <li>
-            <button 
-              onClick={() => setActiveTab('HOME')}
-              className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'HOME' ? 'text-violet-400' : 'text-slate-500 hover:text-slate-400'}`}
-            >
-              <Home size={24} strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">Home</span>
-            </button>
-          </li>
-          <li>
-            <button 
-              onClick={() => setActiveTab('GOALS')}
-              className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'GOALS' ? 'text-violet-400' : 'text-slate-500 hover:text-slate-400'}`}
-            >
-              <Target size={24} strokeWidth={activeTab === 'GOALS' ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">Metas</span>
-            </button>
-          </li>
-          <li>
-            <button 
-              onClick={() => setActiveTab('REPORTS')}
-              className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'REPORTS' ? 'text-violet-400' : 'text-slate-500 hover:text-slate-400'}`}
-            >
-              <BarChart3 size={24} strokeWidth={activeTab === 'REPORTS' ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">Relatórios</span>
-            </button>
-          </li>
-          <li>
-            <button 
-              onClick={() => setActiveTab('SETTINGS')}
-              className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'SETTINGS' ? 'text-violet-400' : 'text-slate-500 hover:text-slate-400'}`}
-            >
-              <SettingsIcon size={24} strokeWidth={activeTab === 'SETTINGS' ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">Config</span>
-            </button>
-          </li>
-        </ul>
+      {/* Sticky Bottom Navigation - Fixed actions bar */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-gray-800 pb-safe z-50">
+        <div className="max-w-md mx-auto w-full px-2 py-3">
+          <ul className="grid grid-cols-5 gap-1 items-end">
+            
+            {/* 1. Home (Implicitly needed for UX) */}
+            <li>
+              <button 
+                onClick={() => setActiveTab('HOME')}
+                className={`w-full flex flex-col items-center gap-1 transition-all ${activeTab === 'HOME' ? 'text-neon' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <Home size={22} strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
+                <span className="text-[9px] font-medium uppercase tracking-wide">Home</span>
+              </button>
+            </li>
+
+            {/* 2. Vendas (Action) */}
+            <li>
+              <button 
+                onClick={() => setModalType(TransactionType.SALE)}
+                className="w-full flex flex-col items-center gap-1 text-gray-500 hover:text-green-400 transition-colors group"
+              >
+                <div className="bg-gray-800 group-hover:bg-gray-700 p-2 rounded-xl border border-gray-700 group-hover:border-green-500 transition-all">
+                  <Plus size={20} className="text-green-500" />
+                </div>
+                <span className="text-[9px] font-medium uppercase tracking-wide">Vendas</span>
+              </button>
+            </li>
+
+            {/* 3. Gastos (Action) */}
+            <li>
+              <button 
+                onClick={() => setModalType(TransactionType.EXPENSE)}
+                className="w-full flex flex-col items-center gap-1 text-gray-500 hover:text-red-400 transition-colors group"
+              >
+                <div className="bg-gray-800 group-hover:bg-gray-700 p-2 rounded-xl border border-gray-700 group-hover:border-red-500 transition-all">
+                  <Minus size={20} className="text-red-500" />
+                </div>
+                <span className="text-[9px] font-medium uppercase tracking-wide">Gastos</span>
+              </button>
+            </li>
+
+            {/* 4. Relatórios */}
+            <li>
+              <button 
+                onClick={() => setActiveTab('REPORTS')}
+                className={`w-full flex flex-col items-center gap-1 transition-all ${activeTab === 'REPORTS' ? 'text-neon' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <BarChart3 size={22} strokeWidth={activeTab === 'REPORTS' ? 2.5 : 2} />
+                <span className="text-[9px] font-medium uppercase tracking-wide">Relat.</span>
+              </button>
+            </li>
+
+            {/* 5. Metas */}
+            <li>
+              <button 
+                onClick={() => setActiveTab('GOALS')}
+                className={`w-full flex flex-col items-center gap-1 transition-all ${activeTab === 'GOALS' ? 'text-neon' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <Target size={22} strokeWidth={activeTab === 'GOALS' ? 2.5 : 2} />
+                <span className="text-[9px] font-medium uppercase tracking-wide">Metas</span>
+              </button>
+            </li>
+
+          </ul>
+        </div>
       </nav>
 
       {/* Transaction Modal */}
